@@ -4,10 +4,17 @@ import sys
 
 class CPU:
     """Main CPU class."""
+    pass
 
     def __init__(self):
         """Construct a new CPU."""
-        pass
+        self.ram = [0] * 256    # Total RAM 
+        self.pc = 0             # Program Counter: address of the currently executing instruction
+        self.ir = [0] * 8       # Instruction Register: copy of the currently executing instruction
+        self.mar = [0] * 8      # Memory Address Registry: holds the memory address we're reading or writing
+        self.mdr = [0] * 8      # Memory Data Register: holds the value to write or read
+        self.fl = [0] * 8       # Flags: hold current "flag" status
+      
 
     def load(self):
         """Load a program into memory."""
@@ -40,6 +47,16 @@ class CPU:
         else:
             raise Exception("Unsupported ALU operation")
 
+
+    def ram_read(self, address):
+        # return value at given address
+        return self.ram[address] 
+
+
+    def ram_write(self, address, value):
+        self.ram[address] = value
+
+
     def trace(self):
         """
         Handy function to print out the CPU state. You might want to call this
@@ -62,4 +79,20 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        # I assume this will get more robust... should load a particular thing...
+        self.load()
+
+        # Make a copy of current instruction (Instruction Registry)
+        ir = self.ram_read(self.pc)
+
+        running = True
+
+        While running:
+            # In case "instruction" need up to 3 bytes...
+            operand_a = ram_read(self.pc + 1)
+            operand_b = ram_read(self.pc + 2)
+
+            #
+
+
+
