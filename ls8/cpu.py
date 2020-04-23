@@ -11,6 +11,7 @@ class CPU:
         self.ram = [0] * 256 # Total RAM 
         self.pc = 0
         self.registry = [0] * 8
+        self.fl = 0 # Flags: hold current "flag" status
 
         # Program Counter: address of the currently executing instruction
         # self.ir = [0]  # self.ram[pc]     # Instruction Register: copy of the currently executing instruction
@@ -35,29 +36,32 @@ class CPU:
 		        self.ram[address] = int(line, 2)
 
 		        address += 1
-        
-        # hardcoded program:
-        # program = [
-        #     # From print8.ls8
-        #     0b10000010, # LDI R0,8
-        #     0b00000000,
-        #     0b00001000,
-        #     0b01000111, # PRN R0
-        #     0b00000000,
-        #     0b00000001, # HLT
-        # ]
-
-        # for instruction in program:
-        #     self.ram[address] = instruction
-        #     address += 1
 
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
+        E = 0b00000001
+        L = 0b00000010
+        G = 0b00000100
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        
+        # elif op == "SUB": etc
+
+        elif op == 'CMP':
+            if reg_a == reg_b:
+                # set flag to E
+                self.fl = E
+            elif reg_a < reg_b:
+                # set flag to L
+                self.fl = L
+            elif reg_a > reg_b:
+                # set flag to G
+                self.fl = G
+            else:
+                print('failed CMP-rison inside ALU func')
+
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -115,6 +119,13 @@ class CPU:
         MUL = 0b10100010
         PUSH = 0b01000101
         POP = 0b01000110
+        CALL = 0b01010000
+        RET = 0b00010001
+        ADD = 0b10100000
+        CMP = 0b10100111
+        JMP = 0b01010100
+        JNE = 0b01010110
+        JEQ = 0b01010101
 
         running = True
 
@@ -164,6 +175,61 @@ class CPU:
 
                 self.pc += 2 # etc...
 
+            elif ir == CALL:
+                # ADDRESS of instruction after call is PUSHed to stack... value = (PC + 2)?
+                self.registry[SP] -= 1 # decriment
+
+                value = self.pc + 2 # value of address at PC+2 -- that's the next instruction.  # OLD: self.registry[operand_b] 
+                address = self.registry[SP]      # index of stack to push value to
+
+                self.ram[address] = value # put that address of next instruction on the stack...
+
+                # PC set to address of operand_a from registry
+                self.pc = self.registry[operand_a] # now we in the middle of nowhere-ram ...
+
+                # ir = self.ram[self.pc] #? Change ir to that instruction...
+
+                # WTF is this? --> "The PC can move forward or backwards from its current location."
+                
+            elif ir == RET:
+                # return from subroutine...
+                # POP value from stack ... 
+                address = self.registry[SP]
+                value = self.ram[address]
+                self.registry[SP] += 1
+
+                # ... and store it in PC
+                self.pc = value
+
+            elif ir == ADD:
+                self.registry[operand_a] += self.registry[operand_b]
+                self.pc += 3
+
+            elif ir == CMP:
+                self.alu(op='CMP', reg_a=operand_a, reg_b=operand_b)
+                self.pc += 3
+
+            elif ir == JMP:
+                self.pc = self.registry[operand_a]
+
+            elif ir == JEQ:
+                # if flag set as E
+                if self.fl == 0b00000001:
+                    # jump to place in register
+                    self.pc = self.registry[operand_a]
+                # otherwise move on
+                else:
+                    self.pc += 2
+
+            elif ir == JNE:
+                # if flag set at anything but E
+                if self.fl != 0b00000001:
+                    # jump to place in register
+                    self.pc = self.registry[operand_a]
+                # otherwise move on
+                else:
+                    self.pc += 2
+
             elif ir == HLT:
                 running = False
 
@@ -174,5 +240,5 @@ class CPU:
 
 # print(sys.argv[1])
 # thing = CPU()
-
+ 
 # thing.run(sys.argv[1])
