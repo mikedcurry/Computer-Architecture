@@ -44,12 +44,13 @@ class CPU:
         L = 0b00000010
         G = 0b00000100
 
-        if op == "ADD":
-            self.reg[reg_a] += self.reg[reg_b]
+        # if op == "ADD":
+        #     self.reg[reg_a] += self.reg[reg_b]
         
         # elif op == "SUB": etc
 
-        elif op == 'CMP':
+        if op == 'CMP':
+            # print('CMP: ', reg_a, reg_b)
             if reg_a == reg_b:
                 # set flag to E
                 self.fl = E
@@ -206,7 +207,7 @@ class CPU:
                 self.pc += 3
 
             elif ir == CMP:
-                self.alu(op='CMP', reg_a=operand_a, reg_b=operand_b)
+                self.alu(op='CMP', reg_a=self.registry[operand_a], reg_b=self.registry[operand_b])
                 self.pc += 3
 
             elif ir == JMP:
@@ -214,6 +215,7 @@ class CPU:
 
             elif ir == JEQ:
                 # if flag set as E
+                # print('flag: ', self.fl)
                 if self.fl == 0b00000001:
                     # jump to place in register
                     self.pc = self.registry[operand_a]
